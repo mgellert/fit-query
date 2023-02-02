@@ -1,33 +1,39 @@
 import hashlib
 from pathlib import Path
-from typing import List, Optional, Tuple, Any, Dict
+from typing import List, Optional, Tuple, Any, Dict, Set
 
+import click
 import pytz
 from fitparse import FitFile
 
 from fit_query.database import Activity
 
 
-def parse_workouts(workout_dir: Path) -> List[Dict[str, Any]]:
-    files: List[Path] = list(_collect_files(workout_dir))
+def parse_workouts(workout_dir: Path, already_saved: Set[str]) -> List[Dict[str, Any]]:
+    allowed_extensions = ['.fit']
+    files: List[Path] = [file for file in _collect_files(workout_dir) if file.suffix in allowed_extensions]
     parsed = list()
 
-    for file in files:
-        fit_file = FitFile(str(file))
-        session = fit_file.get_messages(name="session", as_dict=True)
-        fields = {field["name"]: field["value"] for field in next(session)["fields"] if
-                  field["name"] in vars(Activity)}
+    for i, file in enumerate(files):
+        md5sum = _get_md5sum(file)
 
-        fields["start_time"] = pytz.utc.localize(fields["start_time"])
+        if md5sum not in already_saved:
+            fit_file = FitFile(str(file))
+            session = fit_file.get_messages(name="session", as_dict=True)
+            fields = {field["name"]: field["value"] for field in next(session)["fields"] if
+                      field["name"] in vars(Activity)}
 
-        fields["md5sum"] = _get_md5sum(file)
-        fields["filename"] = file.name
+            fields["start_time"] = pytz.utc.localize(fields["start_time"])
 
-        lat, long = _get_starting_lat_lon(fit_file)
-        fields["start_position_lat"] = lat
-        fields["start_position_long"] = long
+            fields["md5sum"] = md5sum
+            fields["filename"] = file.name
 
-        parsed.append(fields)
+            lat, long = _get_starting_lat_lon(fit_file)
+            fields["start_position_lat"] = lat
+            fields["start_position_long"] = long
+
+            parsed.append(fields)
+            click.echo(f"Parsed {i + 1}/{len(files)}.")
 
     return parsed
 

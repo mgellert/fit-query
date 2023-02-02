@@ -1,19 +1,12 @@
+import logging
 import os
 from datetime import datetime
+from pathlib import Path
+from typing import Set, List
 
-from peewee import SqliteDatabase, Model, FloatField, CharField, DateTimeField, IntegerField, AutoField, TimestampField
+from peewee import Model, FloatField, CharField, DateTimeField, IntegerField, AutoField, TimestampField, SqliteDatabase
 
-
-def save(fields):
-    Activity(**fields)
-
-
-def create_db():
-    is_test = os.getenv('TEST')
-    if is_test:
-        return SqliteDatabase(':memory:')
-    else:
-        raise Exception('Not yet implemented')
+db = SqliteDatabase(None)
 
 
 class Activity(Model):
@@ -41,4 +34,34 @@ class Activity(Model):
     created_at = TimestampField()
 
     def total_distance_km(self) -> float:
+        if not self.total_distance:
+            return 0.0
         return self.total_distance / 1000
+
+    class Meta:
+        database = db
+
+
+def init_db(path: Path):
+    path.parents[0].mkdir(exist_ok=True)
+    db.init(str(path))
+    db.connect()
+    db.create_tables([Activity])
+
+
+def save(fields):
+    Activity(**fields).save()
+
+
+def all_hashes() -> Set[str]:
+    return {a.md5sum for a in Activity.select(Activity.md5sum)}
+
+
+def find(since: datetime, until: datetime, limit) -> List[Activity]:
+    clauses = [
+        (Activity.start_time > since),
+        (Activity.start_time < until)
+    ]
+
+    query = Activity.select().order_by(Activity.start_time.desc()).limit(limit)
+    return list(query)

@@ -103,10 +103,21 @@ category = "main"
 optional = false
 python-versions = "*"
 
+[[package]]
+name = "tabulate"
+version = "0.9.0"
+description = "Pretty-print tabular data"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[package.extras]
+widechars = ["wcwidth"]
+
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.11"
-content-hash = "8cb55d76e54daa7f8d72e7175d58c79e9e3125e3b9c4ec228ed2132a087096d8"
+content-hash = "95541458feff0593743f00287140295b0a6f42ab2ce663958bd5042e4b79ce59"
 
 [metadata.files]
 attrs = [
@@ -146,4 +157,8 @@ pytest = [
 pytz = [
     {file = "pytz-2022.7.1-py2.py3-none-any.whl", hash = "sha256:78f4f37d8198e0627c5f1143240bb0206b8691d8d7ac6d78fee88b78733f8c4a"},
     {file = "pytz-2022.7.1.tar.gz", hash = "sha256:01a0681c4b9684a28304615eba55d1ab31ae00bf68ec157ec3708a8182dbbcd0"},
+]
+tabulate = [
+    {file = "tabulate-0.9.0-py3-none-any.whl", hash = "sha256:024ca478df22e9340661486f85298cff5f6dcdba14f3813e8830015b9ed1948f"},
+    {file = "tabulate-0.9.0.tar.gz", hash = "sha256:0095b12bf5966de529c0feb1fa08671671b3368eec77d7ef7ab114be2c068b3c"},
 ]
