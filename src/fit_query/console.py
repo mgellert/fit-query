@@ -51,7 +51,7 @@ def query(since: datetime, until: datetime, sport: str, year: int, month: int, l
             a.sport,
             f"{a.total_distance_km():.2f}"
         ])
-    table = tabulate(data, headers=["Start time", "Sport", "Dist. (km)"])
+    table = tabulate(data, headers=["Start time", "Sport", "Dist. (km)"], floatfmt=".2f")
     click.echo(table)
 
 

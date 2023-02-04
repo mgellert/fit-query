@@ -86,6 +86,28 @@ def test_querying_with_filters():
     _cleanup_test_db()
 
 
+def test_rounding():
+    runner = CliRunner(env={'DB_PATH': str(TEST_DB)})
+    activities = [
+        Activity(
+            md5sum='a8ea8b7f501650fc836841db0cbdf3dd',
+            filename='foo1.fit',
+            start_time=datetime.datetime(2022, 6, 7, 8, 30, 0, tzinfo=pytz.UTC),
+            sport='running',
+            total_distance=9500,
+        )
+    ]
+    _prepare_test_db(activities)
+    result = runner.invoke(cli, ['--show-sql', 'query'], catch_exceptions=False)
+    expected = textwrap.dedent("""
+        Start time           Sport      Dist. (km)
+        -------------------  -------  ------------
+        2022-06-07 10:30:00  running          9.50
+    """).lstrip()
+    assert result.output.endswith(expected)
+    _cleanup_test_db()
+
+
 def _prepare_test_db(activities: List[Activity]):
     _cleanup_test_db()
     database.init_db(TEST_DB)
