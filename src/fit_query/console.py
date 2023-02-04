@@ -36,11 +36,14 @@ def import_files(workout_dir: Path):
 
 
 @click.command()
-@click.option('--since', default='1900-01-01', type=click.DateTime(formats=["%Y-%m-%d"]))
-@click.option('--until', default='2100-01-01', type=click.DateTime(formats=["%Y-%m-%d"]))
-@click.option('--limit', default=20, type=int)
-def query(since, until, limit):
-    activities = database.find(since, until, limit)
+@click.option('--since', type=click.DateTime(formats=["%Y-%m-%d"]))
+@click.option('--until', type=click.DateTime(formats=["%Y-%m-%d"]))
+@click.option('--sport', type=str)
+@click.option('--year', type=int)
+@click.option('--month', type=click.IntRange(min=1, max=12))
+@click.option('--limit', type=int)
+def query(since: datetime, until: datetime, sport: str, year: int, month: int, limit: int):
+    activities = database.find(since, until, sport, year, month, limit)
     data = []
     for a in activities:
         data.append([

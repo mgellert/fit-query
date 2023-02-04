@@ -1,10 +1,13 @@
 import logging
+import operator
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
+from functools import reduce
 from pathlib import Path
 from typing import Set, List
 
-from peewee import Model, FloatField, CharField, DateTimeField, IntegerField, AutoField, TimestampField, SqliteDatabase
+from peewee import Model, FloatField, CharField, DateTimeField, IntegerField, AutoField, TimestampField, SqliteDatabase, \
+    fn
 
 db = SqliteDatabase(None)
 
@@ -57,11 +60,28 @@ def all_hashes() -> Set[str]:
     return {a.md5sum for a in Activity.select(Activity.md5sum)}
 
 
-def find(since: datetime, until: datetime, limit) -> List[Activity]:
-    clauses = [
-        (Activity.start_time > since),
-        (Activity.start_time < until)
-    ]
+def find(since: datetime, until: datetime, sport: str, year: int, month: int, limit: int) -> List[Activity]:
+    query = Activity.select()
 
-    query = Activity.select().order_by(Activity.start_time.desc()).limit(limit)
+    clauses = []
+    if since:
+        clauses.append(Activity.start_time >= since)
+    if until:
+        until = until + timedelta(hours=23, minutes=59, seconds=59)
+        clauses.append(Activity.start_time <= until)
+    if sport:
+        clauses.append(Activity.sport == sport)
+    if year:
+        clauses.append(fn.strftime('%Y', Activity.start_time).cast('integer') == year)
+    if month:
+        clauses.append(fn.strftime('%m', Activity.start_time).cast('integer') == month)
+
+    if len(clauses) > 0:
+        query = query.where(reduce(operator.and_, clauses))
+
+    query = query.order_by(Activity.start_time.desc())
+
+    if limit:
+        query = query.limit(limit)
+
     return list(query)
