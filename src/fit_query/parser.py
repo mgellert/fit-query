@@ -8,34 +8,38 @@ from fitparse import FitFile
 
 from fit_query.database import Activity
 
+ALLOWED_EXTENSIONS = ['.fit']
+
 
 def parse_workouts(workout_dir: Path, already_saved: Set[str]) -> List[Dict[str, Any]]:
-    allowed_extensions = ['.fit']
-    files: List[Path] = [file for file in _collect_files(workout_dir) if file.suffix in allowed_extensions]
-    parsed = list()
+    files: List[Path] = [file for file in _collect_files(workout_dir) if file.suffix in ALLOWED_EXTENSIONS]
+    files = [file for file in files if _get_md5sum(file) not in already_saved]
 
-    for i, file in enumerate(files):
-        md5sum = _get_md5sum(file)
+    len_files = len(files)
+    if len_files == 0:
+        click.echo("No unparsed file found.")
 
-        if md5sum not in already_saved:
-            fit_file = FitFile(str(file))
-            session = fit_file.get_messages(name="session", as_dict=True)
-            fields = {field["name"]: field["value"] for field in next(session)["fields"] if
-                      field["name"] in vars(Activity)}
+    return [_parse_file(file, len_files, i + 1) for (i, file) in enumerate(files)]
 
-            fields["start_time"] = pytz.utc.localize(fields["start_time"])
 
-            fields["md5sum"] = md5sum
-            fields["filename"] = file.name
+def _parse_file(file: Path, len_files: int, i: int) -> Dict[str, Any]:
+    md5sum = _get_md5sum(file)
+    fit_file = FitFile(str(file))
+    session = fit_file.get_messages(name="session", as_dict=True)
+    fields = {field["name"]: field["value"] for field in next(session)["fields"] if
+              field["name"] in vars(Activity)}
 
-            lat, long = _get_starting_lat_lon(fit_file)
-            fields["start_position_lat"] = lat
-            fields["start_position_long"] = long
+    fields["start_time"] = pytz.utc.localize(fields["start_time"])
 
-            parsed.append(fields)
-            click.echo(f"Parsed {i + 1}/{len(files)}.")
+    fields["md5sum"] = md5sum
+    fields["filename"] = file.name
 
-    return parsed
+    lat, long = _get_starting_lat_lon(fit_file)
+    fields["start_position_lat"] = lat
+    fields["start_position_long"] = long
+
+    click.echo(f"Parsed {i}/{len_files}.")
+    return fields
 
 
 def _collect_files(path):
