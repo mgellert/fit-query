@@ -4,7 +4,7 @@ from datetime import datetime
 from pathlib import Path
 
 import click
-from tabulate import tabulate
+from tabulate import tabulate, SEPARATING_LINE
 
 import src.fit_query.parser as parser
 from fit_query import database
@@ -51,6 +51,17 @@ def query(since: datetime, until: datetime, sport: str, year: int, month: int, l
             a.sport,
             f"{a.total_distance_km():.2f}"
         ])
+
+    different_sports = len({activity.sport for activity in activities})
+    sum_distance_km = sum([activity.total_distance_km() for activity in activities])
+    summary = [
+        f"Count: {len(data)}",
+        f"Sports: {different_sports}",
+        sum_distance_km
+    ]
+    data.append(SEPARATING_LINE)
+    data.append(summary)
+
     table = tabulate(data, headers=["Start time", "Sport", "Dist. (km)"], floatfmt=".2f")
     click.echo(table)
 

@@ -40,10 +40,12 @@ def test_querying_activities_defaults():
     _prepare_test_db(activities)
     result = runner.invoke(cli, ['--show-sql', 'query'], catch_exceptions=False)
     expected = textwrap.dedent("""
-        Start time           Sport      Dist. (km)
-        -------------------  -------  ------------
-        2022-06-08 10:30:00  running         12.35
-        2022-06-07 10:30:00  running          9.88
+        Start time           Sport        Dist. (km)
+        -------------------  ---------  ------------
+        2022-06-08 10:30:00  running           12.35
+        2022-06-07 10:30:00  running            9.88
+        -------------------  ---------  ------------
+        Count: 2             Sports: 1         22.22
     """).lstrip()
     assert result.output.endswith(expected)
     _cleanup_test_db()
@@ -75,14 +77,16 @@ def test_querying_with_filters():
         )
     ]
     _prepare_test_db(activities)
-    result = runner.invoke(cli, ['--show-sql', 'query', '--sport', 'running'], catch_exceptions=False)
+    result = runner.invoke(cli, ['query', '--sport', 'running'], catch_exceptions=False)
     expected = textwrap.dedent("""
-        Start time           Sport      Dist. (km)
-        -------------------  -------  ------------
-        2022-06-09 10:30:00  running         11.99
-        2022-06-07 10:30:00  running          9.88
+        Start time           Sport        Dist. (km)
+        -------------------  ---------  ------------
+        2022-06-09 10:30:00  running           11.99
+        2022-06-07 10:30:00  running            9.88
+        -------------------  ---------  ------------
+        Count: 2             Sports: 1         21.86
     """).lstrip()
-    assert result.output.endswith(expected)
+    assert result.output == expected
     _cleanup_test_db()
 
 
@@ -98,13 +102,15 @@ def test_rounding():
         )
     ]
     _prepare_test_db(activities)
-    result = runner.invoke(cli, ['--show-sql', 'query'], catch_exceptions=False)
+    result = runner.invoke(cli, ['query'], catch_exceptions=False)
     expected = textwrap.dedent("""
-        Start time           Sport      Dist. (km)
-        -------------------  -------  ------------
-        2022-06-07 10:30:00  running          9.50
+        Start time           Sport        Dist. (km)
+        -------------------  ---------  ------------
+        2022-06-07 10:30:00  running            9.50
+        -------------------  ---------  ------------
+        Count: 1             Sports: 1          9.50
     """).lstrip()
-    assert result.output.endswith(expected)
+    assert result.output == expected
     _cleanup_test_db()
 
 
