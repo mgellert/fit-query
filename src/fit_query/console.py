@@ -42,7 +42,10 @@ def import_files(workout_dir: Path):
 @click.option('--year', type=int)
 @click.option('--month', type=click.IntRange(min=1, max=12))
 @click.option('--limit', type=int)
-def query(since: datetime, until: datetime, sport: str, year: int, month: int, limit: int):
+@click.option('--reverse', type=bool, default=False, is_flag=True)
+@click.option('--summary/--no-summary', type=bool, default=True)
+def query(since: datetime, until: datetime, sport: str, year: int, month: int, limit: int, reverse: bool,
+          summary: bool):
     activities = database.find(since, until, sport, year, month, limit)
     data = []
     for a in activities:
@@ -52,15 +55,19 @@ def query(since: datetime, until: datetime, sport: str, year: int, month: int, l
             f"{a.total_distance_km():.2f}"
         ])
 
-    different_sports = len({activity.sport for activity in activities})
-    sum_distance_km = sum([activity.total_distance_km() for activity in activities])
-    summary = [
-        f"Count: {len(data)}",
-        f"Sports: {different_sports}",
-        sum_distance_km
-    ]
-    data.append(SEPARATING_LINE)
-    data.append(summary)
+    if reverse:
+        data.reverse()
+
+    if summary:
+        different_sports = len({activity.sport for activity in activities})
+        sum_distance_km = sum([activity.total_distance_km() for activity in activities])
+        summary = [
+            f"Count: {len(data)}",
+            f"Sports: {different_sports}",
+            sum_distance_km
+        ]
+        data.append(SEPARATING_LINE)
+        data.append(summary)
 
     table = tabulate(data, headers=["Start time", "Sport", "Dist. (km)"], floatfmt=".2f")
     click.echo(table)
